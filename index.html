@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3 gap-2">
+  <a href="{{ url_for('new_event') }}" class="btn btn-primary btn-sm">+ Eveniment nou</a>
+  <form method="post" action="{{ url_for('test_discord') }}">
+    <button type="submit" class="btn btn-outline-secondary btn-sm">TEST DISCORD</button>
+  </form>
+</div>
+
+{% if not events %}
+  <p class="text-muted">Nu există evenimente încă.</p>
+{% endif %}
+
+<div class="list-group">
+{% for event in events %}
+  <div class="list-group-item">
+    <div class="mb-2">
+      <strong>{{ event.name }}</strong>
+      {% if not event.active %}<span class="badge bg-secondary">inactiv</span>{% endif %}
+      <br>
+      <small class="text-muted">
+        Ora (server time): {{ event.event_time }} ·
+        Recurență: {{ recurrence_labels.get(event.recurrence_type, event.recurrence_type) }}
+        {% if event.recurrence_type == 'every_x_days' and event.recurrence_interval_days %}
+          ({{ event.recurrence_interval_days }} zile)
+        {% endif %}
+        · Start: {{ event.start_date.isoformat() }}
+      </small>
+      <br>
+      {% if event.reminders %}
+        <small class="text-muted">
+          Remindere:
+          {% for r in event.reminders %}
+            {{ r.minutes_before }} min{% if not r.active %} (inactiv){% endif %}{% if not loop.last %}, {% endif %}
+          {% endfor %}
+        </small>
+      {% else %}
+        <small class="text-danger">Niciun reminder configurat.</small>
+      {% endif %}
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+      <a href="{{ url_for('edit_event', event_id=event.id) }}" class="btn btn-sm btn-outline-primary">Editează</a>
+      <form method="post" action="{{ url_for('toggle_event', event_id=event.id) }}">
+        <button class="btn btn-sm btn-outline-warning">{{ 'Dezactivează' if event.active else 'Activează' }}</button>
+      </form>
+      <form method="post" action="{{ url_for('delete_event', event_id=event.id) }}"
+            onsubmit='return confirm({{ ("Sigur ștergi evenimentul " ~ event.name ~ "?")|tojson }});'>
+        <button class="btn btn-sm btn-outline-danger">Șterge</button>
+      </form>
+    </div>
+  </div>
+{% endfor %}
+</div>
+{% endblock %}
